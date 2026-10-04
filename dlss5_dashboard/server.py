@@ -121,7 +121,9 @@ def api_post(path: str, body: dict):
         return {"log": backup.set_enabled(manifest, bool(body["enabled"]))}
     if path == "/api/launch":
         g = games.analyze(_game_or_404(body["id"]))
-        return {"log": launcher.launch(g, bool(body.get("dlss_on", True)), body.get("args", ""))}
+        neural = body.get("neural_on")
+        return {"log": launcher.launch(g, bool(body.get("dlss_on", True)), body.get("args", ""),
+                                       None if neural is None else bool(neural))}
     if path == "/api/open-folder":
         g = games.analyze(_game_or_404(body["id"]))
         launcher.open_folder(g.get("exe_dir") or g["install_dir"])

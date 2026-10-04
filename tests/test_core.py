@@ -353,3 +353,30 @@ class OptiVerifyAndDlcTests(unittest.TestCase):
             '<Game configVersion="1"><Identity Name="Pub.DLC1" Publisher="CN=X" Version="1.0.0.0"/>'
             '<ShellVisuals DefaultDisplayName="DLC 1"/></Game>')
         self.assertEqual(xbox.scan(d), [])
+
+
+class NeuralSwitchTests(unittest.TestCase):
+    def test_launch_writes_dlssnr_enabled(self):
+        from dlss5_dashboard import launcher
+        d = Path(tempfile.mkdtemp())
+        (d / "Game.exe").write_bytes(b"MZ")
+        (d / "OptiScaler.ini").write_text("[DlssNr]\nEnabled=auto\n")
+        m = backup.begin("manual:nr", str(d), "optiscaler")
+        backup.finish(m)
+        store.update(lambda s: s["manifests"].__setitem__("manual:nr", m))
+        opened = []
+        orig = launcher._open
+        launcher._open = opened.append
+        try:
+            game = {"id": "manual:nr", "source": "xbox", "xbox": {"identity": "X"}, "exe": str(d / "Game.exe")}
+            from dlss5_dashboard import xbox
+            orig_t, xbox.launch_target = xbox.launch_target, lambda g: "shell:AppsFolder\\X_1!Game"
+            try:
+                launcher.launch(game, True, "", neural_on=False)
+            finally:
+                xbox.launch_target = orig_t
+        finally:
+            launcher._open = orig
+            store.update(lambda s: s["manifests"].pop("manual:nr"))
+        self.assertEqual(IniDoc.load(d / "OptiScaler.ini").get("DlssNr", "Enabled"), "false")
+        self.assertEqual(opened, ["shell:AppsFolder\\X_1!Game"])

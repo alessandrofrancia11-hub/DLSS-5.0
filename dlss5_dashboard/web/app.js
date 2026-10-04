@@ -129,10 +129,15 @@ function renderDetail(g) {
           <input type="checkbox" id="dlss-on" ${dlssOn && inst ? "checked" : ""} ${inst ? "" : "disabled"}>
           <span class="track"></span><span id="dlss-label">DLSS 5 ${dlssOn && inst ? "ON" : "OFF"}</span>
         </label>
+        ${g.install && g.install.route === "optiscaler" && g.settings.optiscaler ? `
+        <label class="switch" title="Riavvia il gioco per vedere la differenza">
+          <input type="checkbox" id="neural-on" ${String(g.settings.optiscaler.values["DlssNr.Enabled"]).toLowerCase() === "true" ? "checked" : ""}>
+          <span class="track"></span><span id="neural-label">Neurale</span>
+        </label>` : ""}
         <input class="args" id="args" placeholder="Parametri di avvio (es. -nointro)" value="${esc(prefs.args || "")}" ${g.source === "xbox" ? 'hidden' : ""}>
         <button class="big" data-act="launch">▶ Avvia gioco</button>
       </div>
-      <div class="small muted" style="margin-top:8px">OFF rinomina le DLL iniettate in *.dlss5off: il gioco parte originale. ON le rimette.</div>
+      <div class="small muted" style="margin-top:8px">DLSS 5 OFF rinomina le DLL iniettate in *.dlss5off: il gioco parte originale. "Neurale" (solo OptiScaler) accende/spegne il solo modello neurale: chiudi e riavvia il gioco per confrontare.</div>
     </div>` : "";
 
   $("#detail").innerHTML = info + launch + checkCard(g) + installCard(g) + settingsCards(g);
@@ -293,7 +298,9 @@ function bindDetail(g) {
     const act = b.dataset.act;
     try {
       if (act === "launch") {
-        const r = await api("/api/launch", { id: g.id, dlss_on: !!(sw && sw.checked), args: g.source === "xbox" ? "" : $("#args").value });
+        const nsw = $("#neural-on", d);
+        const r = await api("/api/launch", { id: g.id, dlss_on: !!(sw && sw.checked), args: g.source === "xbox" ? "" : $("#args").value,
+                                              neural_on: nsw ? nsw.checked : null });
         toast(r.log.join("\n"));
       } else if (act === "folder") {
         await api("/api/open-folder", { id: g.id });

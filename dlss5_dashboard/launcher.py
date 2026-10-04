@@ -8,11 +8,19 @@ import urllib.parse
 from pathlib import Path
 
 from . import backup, store
+from .inifile import IniDoc
 
 
-def launch(game: dict, dlss_on: bool, args: str = "") -> list[str]:
+def launch(game: dict, dlss_on: bool, args: str = "", neural_on: bool | None = None) -> list[str]:
     log = []
     manifest = store.load()["manifests"].get(game["id"])
+    if manifest and neural_on is not None and manifest.get("route") == "optiscaler":
+        ini = Path(manifest["exe_dir"]) / "OptiScaler.ini"
+        if ini.exists():
+            doc = IniDoc.load(ini)
+            doc.set("DlssNr", "Enabled", "true" if neural_on else "false")
+            doc.save(ini)
+            log.append(f"Neurale DLSS 5 {'acceso' if neural_on else 'spento'} (OptiScaler.ini)")
     if manifest:
         renamed = backup.set_enabled(manifest, dlss_on)
         log += renamed or [f"DLSS 5 gia' {'attivo' if dlss_on else 'disattivato'}"]
