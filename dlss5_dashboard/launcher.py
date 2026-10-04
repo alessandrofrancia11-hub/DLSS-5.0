@@ -25,7 +25,15 @@ def launch(game: dict, dlss_on: bool, args: str = "") -> list[str]:
         pref["dlss_on"] = dlss_on
     store.update(lambda s: s["prefs"].setdefault(game["id"], {}).update(pref))
 
-    if game.get("appid"):
+    if game.get("source") == "xbox":
+        from . import xbox
+        target = xbox.launch_target(game)
+        if not target:
+            raise RuntimeError("Pacchetto Xbox non trovato in Windows: avvia il gioco dall'app Xbox "
+                               "(DLSS 5 resta comunque attivo/disattivo come impostato qui).")
+        log.append(f"Avvio tramite Xbox: {target}")
+        _open(target)
+    elif game.get("appid"):
         url = f"steam://run/{game['appid']}//{urllib.parse.quote(args)}/" if args \
             else f"steam://rungameid/{game['appid']}"
         log.append(f"Avvio tramite Steam: {url}")

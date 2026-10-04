@@ -11,7 +11,7 @@ _HOME = tempfile.mkdtemp()
 os.environ["DLSS5_DASHBOARD_HOME"] = _HOME
 
 from dlss5_dashboard import (backup, compare_key, games, pe, server, settings_schema, store,  # noqa: E402
-                            sysinfo, verify)
+                            sysinfo, verify, xbox)
 from dlss5_dashboard.inifile import IniDoc  # noqa: E402
 
 OPTI_SAMPLE = """; header comment
@@ -288,3 +288,44 @@ class CompareKeyTests(unittest.TestCase):
         self.assertEqual(compare_key.read(d)["value"], "145,0,0,0")
         with self.assertRaises(ValueError):
             compare_key.write(d, "999,0,0,0")
+
+
+class XboxTests(unittest.TestCase):
+    CONFIG = """<?xml version="1.0" encoding="utf-8"?>
+<Game configVersion="1">
+  <Identity Name="Publisher.CoolGame" Publisher="CN=X" Version="1.0.0.0"/>
+  <ExecutableList>
+    <Executable Name="gamelaunchhelper.exe" Id="Game" TargetDeviceFamily="PC"/>
+  </ExecutableList>
+  <ShellVisuals DefaultDisplayName="Cool Game"/>
+</Game>"""
+
+    def test_gaming_root_and_scan(self):
+        drive = Path(tempfile.mkdtemp())
+        path = "\\Giochi Xbox"
+        (drive / ".GamingRoot").write_bytes(b"RGBX" + (1).to_bytes(4, "little")
+                                            + (path + "\0").encode("utf-16-le"))
+        self.assertEqual(xbox.parse_gaming_root((drive / ".GamingRoot").read_bytes()), [path])
+        content = drive / "Giochi Xbox" / "Cool Game" / "Content"
+        (content / "Binaries").mkdir(parents=True)
+        (content / "MicrosoftGame.config").write_text(self.CONFIG)
+        (content / "gamelaunchhelper.exe").write_bytes(b"MZ" + b"\0" * 10)
+        (content / "Binaries" / "CoolGame.exe").write_bytes(b"MZ" + b"\0" * 5000)
+        (drive / "XboxGames").mkdir()  # default folder, empty
+
+        found = xbox.xbox_games([str(drive)])
+        self.assertEqual(len(found), 1)
+        g = found[0]
+        self.assertEqual(g["id"], "xbox:Publisher.CoolGame")
+        self.assertEqual(g["name"], "Cool Game")
+        self.assertEqual(Path(g["exe"]).name, "CoolGame.exe")  # not the launcher wrapper
+        self.assertEqual(g["xbox"]["app_id"], "Game")
+        a = games.analyze(g)
+        self.assertEqual(a["recommended_route"], "feeder")
+        self.assertTrue(any("Xbox" in n for n in a["notes"]))
+
+    def test_bad_config_is_skipped(self):
+        d = Path(tempfile.mkdtemp())
+        (d / "Broken" / "Content").mkdir(parents=True)
+        (d / "Broken" / "Content" / "MicrosoftGame.config").write_text("<not xml")
+        self.assertEqual(xbox.scan(d), [])

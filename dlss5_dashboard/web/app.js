@@ -69,7 +69,7 @@ function renderGames() {
   const list = GAMES.filter((g) => g.name.toLowerCase().includes(q));
   $("#games").innerHTML = list.length
     ? list.map((g) => `<li data-id="${esc(g.id)}" class="${g.id === CURRENT ? "active" : ""}">
-        <span>${esc(g.name)}</span>
+        <span>${esc(g.name)}${g.source === "xbox" ? ` <span class="badge">Xbox</span>` : ""}</span>
         ${g.installed_route ? `<span class="badge on">${esc(g.installed_route)}</span>` : ""}
       </li>`).join("")
     : `<li class="muted">Nessun gioco trovato. Aggiungilo a mano qui sotto.</li>`;
@@ -129,7 +129,7 @@ function renderDetail(g) {
           <input type="checkbox" id="dlss-on" ${dlssOn && inst ? "checked" : ""} ${inst ? "" : "disabled"}>
           <span class="track"></span><span id="dlss-label">DLSS 5 ${dlssOn && inst ? "ON" : "OFF"}</span>
         </label>
-        <input class="args" id="args" placeholder="Parametri di avvio (es. -nointro)" value="${esc(prefs.args || "")}">
+        <input class="args" id="args" placeholder="Parametri di avvio (es. -nointro)" value="${esc(prefs.args || "")}" ${g.source === "xbox" ? 'hidden' : ""}>
         <button class="big" data-act="launch">▶ Avvia gioco</button>
       </div>
       <div class="small muted" style="margin-top:8px">OFF rinomina le DLL iniettate in *.dlss5off: il gioco parte originale. ON le rimette.</div>
@@ -291,7 +291,7 @@ function bindDetail(g) {
     const act = b.dataset.act;
     try {
       if (act === "launch") {
-        const r = await api("/api/launch", { id: g.id, dlss_on: !!(sw && sw.checked), args: $("#args").value });
+        const r = await api("/api/launch", { id: g.id, dlss_on: !!(sw && sw.checked), args: g.source === "xbox" ? "" : $("#args").value });
         toast(r.log.join("\n"));
       } else if (act === "folder") {
         await api("/api/open-folder", { id: g.id });

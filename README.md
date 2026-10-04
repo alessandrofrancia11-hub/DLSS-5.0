@@ -24,7 +24,7 @@ py -m dlss5_dashboard serve --port 8765
 | Sezione | Dettagli |
 |---|---|
 | **Sistema** | GPU, driver, VRAM (via `nvidia-smi`), CPU, RAM, Windows. Dice cosa supporta la tua scheda. |
-| **Giochi** | Scansione delle librerie Steam + aggiunta manuale di qualsiasi `.exe`. Rileva architettura, API grafica, DLSS nativo e anti-cheat. |
+| **Giochi** | Scansione delle librerie Steam e **Xbox / PC Game Pass** (cartelle `XboxGames`) + aggiunta manuale di qualsiasi `.exe`. Rileva architettura, API grafica, DLSS nativo e anti-cheat. |
 | **Installa** | Route **DLSS5-Feeder** per i giochi senza DLSS (es. Euro Truck Simulator 2) oppure **OptiScaler DLSS-NR** per i giochi con DLSS. Backup automatico prima di toccare qualunque file. |
 | **Parametri** | Feeder (`dlss5-feed.cfg`): on/off, modalità, preset, risoluzione di lavoro neurale, HDR, depth, motion vector. OptiScaler (`OptiScaler.ini`): preset DLSS, rapporti di scala, output scaling, nitidezza, tutti i controlli DLSS 5 Neural Rendering, sblocco Multi Frame Generation RTX 40. |
 | **Avvio** | Interruttore DLSS 5 ON/OFF + parametri di avvio. OFF rinomina le DLL iniettate in `*.dlss5off`, quindi il gioco parte originale. |
@@ -46,6 +46,14 @@ Tutti i componenti vengono scaricati **dai rispettivi autori** al momento dell'i
 - Usa **Verifica DLSS 5** dopo una partita per sapere se il modello ha lavorato davvero.
 - Anche senza quella DLL hai benefici reali: **DLAA** nei giochi senza DLSS (Feeder), preset transformer e
   **Frame Generation 3x/4x** sui giochi con DLSS-FG (build `+ sblocco MFG RTX 40`).
+
+## Giochi Xbox / PC Game Pass
+
+- La dashboard trova i giochi nelle cartelle `XboxGames` di ogni disco (quella scelta nell'app Xbox).
+- Usa l'eseguibile vero del gioco, non `gamelaunchhelper.exe`, e lo avvia tramite Windows come fa l'app Xbox.
+- I giochi rimasti in `C:\Program Files\WindowsApps` sono protetti e non si possono modificare: spostali
+  dall'app Xbox (Gestisci → File) in una cartella `XboxGames`.
+- Attenzione ai giochi Game Pass con anti-cheat (es. Forza Horizon, titoli online): rischio ban.
 
 ## Euro Truck Simulator 2
 
