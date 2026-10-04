@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DLSS 5 Dashboard</title>
+<link rel="stylesheet" href="style.css">
+<script>window.DLSS_TOKEN = "__TOKEN__";</script>
+<script src="app.js" defer></script>
+</head>
+<body>
+<header class="top">
+  <div class="brand"><span class="logo">▲</span> DLSS 5 Dashboard</div>
+  <button id="refresh-sys" class="ghost" title="Rileggi informazioni di sistema">↻ Sistema</button>
+</header>
+
+<section id="system" class="card system"><div class="muted">Leggo le informazioni di sistema…</div></section>
+
+<main class="layout">
+  <aside class="card sidebar">
+    <div class="side-head">
+      <h2>Giochi</h2>
+      <input id="search" type="search" placeholder="Cerca…" aria-label="Cerca gioco">
+    </div>
+    <ul id="games" class="games"><li class="muted">Scansione librerie…</li></ul>
+    <details class="add">
+      <summary>+ Aggiungi gioco a mano</summary>
+      <input id="add-exe" placeholder="C:\Giochi\MioGioco\gioco.exe">
+      <input id="add-name" placeholder="Nome (facoltativo)">
+      <button id="add-btn">Aggiungi</button>
+    </details>
+  </aside>
+
+  <section id="detail" class="detail">
+    <div class="card empty">Seleziona un gioco a sinistra.</div>
+  </section>
+</main>
+
+<dialog id="job">
+  <h3 id="job-title">Operazione</h3>
+  <pre id="job-log"></pre>
+  <div class="row end">
+    <span id="job-status" class="badge">in corso</span>
+    <button id="job-close" class="ghost">Chiudi</button>
+  </div>
+</dialog>
+
+<div id="toast" class="toast" hidden></div>
+</body>
+</html>
