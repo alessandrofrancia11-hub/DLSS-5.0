@@ -138,7 +138,27 @@ OPTISCALER = {
     ],
 }
 
-SCHEMAS = {"feeder": FEEDER, "optiscaler": OPTISCALER}
+# ReShade's hotkeys are "virtual-key code,ctrl,shift,alt".
+RESHADE = {
+    "file": "ReShade.ini",
+    "title": "ReShade (overlay)",
+    "groups": [
+        {"title": "Tasti", "fields": [
+            _f("INPUT", "KeyOverlay", "Tasto per aprire l'overlay ReShade", "select",
+               "Se HOME non funziona (tastiera compatta, conflitto col gioco) scegline un altro.",
+               options={"36,0,0,0": "Home", "35,0,0,0": "Fine (End)", "34,0,0,0": "Pag giu'",
+                        "113,0,1,0": "Shift + F2", "121,0,1,0": "Shift + F10",
+                        "123,1,0,0": "Ctrl + F12"}, default="36,0,0,0"),
+            _f("INPUT", "KeyEffects", "Tasto attiva/disattiva effetti", "select",
+               "Utile per confrontare al volo con e senza DLSS.",
+               options={"0,0,0,0": "Nessuno", "145,0,0,0": "Bloc Scorr (Scroll Lock)",
+                        "119,0,1,0": "Shift + F8", "120,0,1,0": "Shift + F9"},
+               default="0,0,0,0"),
+        ]},
+    ],
+}
+
+SCHEMAS = {"feeder": FEEDER, "optiscaler": OPTISCALER, "reshade": RESHADE}
 
 
 def _fields(schema):
