@@ -15,7 +15,8 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import parse_qs, urlparse
 
-from . import __version__, backup, games, installers, jobs, launcher, settings_schema, store, sysinfo
+from . import (__version__, backup, compare_key, games, installers, jobs, launcher, settings_schema,
+               store, sysinfo, verify)
 
 WEB = Path(__file__).parent / "web"
 TOKEN = secrets.token_urlsafe(24)
@@ -51,6 +52,7 @@ def game_detail(gid: str) -> dict:
                         "proxies": backup.proxies(manifest),
                         "enabled": backup.is_enabled(manifest)}
     a["settings"] = {}
+    a["compare_key"] = compare_key.read(a["exe_dir"]) if a.get("exe_dir") else None
     if a.get("exe_dir"):
         for key, schema in settings_schema.SCHEMAS.items():
             values = settings_schema.read_values(schema, Path(a["exe_dir"]))
@@ -73,6 +75,11 @@ def api_get(path: str, q: dict):
         if not j:
             raise LookupError("Job non trovato.")
         return j
+    if path == "/api/verify":
+        g = games.analyze(_game_or_404(q["id"]))
+        if not g.get("exe_dir"):
+            raise ValueError("Eseguibile non trovato.")
+        return verify.check(g["exe_dir"])
     if path == "/api/options":
         return {"consumers": installers.FEEDER_CONSUMERS, "apis": installers.FEEDER_APIS,
                 "opti_builds": {k: v["label"] for k, v in installers.OPTI_BUILDS.items()},
@@ -90,6 +97,9 @@ def api_post(path: str, body: dict):
         g = games.analyze(_game_or_404(body["id"]))
         schema = settings_schema.SCHEMAS[body["file"]]
         return {"changed": settings_schema.write_values(schema, Path(g["exe_dir"]), body["values"])}
+    if path == "/api/compare-key":
+        g = games.analyze(_game_or_404(body["id"]))
+        return {"techniques": compare_key.write(g["exe_dir"], body["key"])}
     if path == "/api/install":
         g = games.analyze(_game_or_404(body["id"]))
         if not g.get("exe"):

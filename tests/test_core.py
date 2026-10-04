@@ -10,7 +10,8 @@ from pathlib import Path
 _HOME = tempfile.mkdtemp()
 os.environ["DLSS5_DASHBOARD_HOME"] = _HOME
 
-from dlss5_dashboard import backup, games, pe, server, settings_schema, store, sysinfo  # noqa: E402
+from dlss5_dashboard import (backup, compare_key, games, pe, server, settings_schema, store,  # noqa: E402
+                            sysinfo, verify)
 from dlss5_dashboard.inifile import IniDoc  # noqa: E402
 
 OPTI_SAMPLE = """; header comment
@@ -234,3 +235,56 @@ class ServerTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class VerifyTests(unittest.TestCase):
+    LOG = (
+        "15:53:40:822 [1] | INFO  | [DLSS 5 Neural Rendering] DLSS5 Generic: frame contract path=inline "
+        "in=2560x1440 out=2560x1440 hdr=1\n"
+        "15:53:49:220 [1] | INFO  | [DLSS 5 Neural Rendering] DLSS5 Generic: telemetry t=4291.87s "
+        "win=30.00s presents=1799 ticks=1799 fps=59.96 frame_ms[avg=16.68]\n"
+        "15:53:49:222 [1] | INFO  | [DLSS 5 Neural Rendering] DLSS5 Generic: NR cost: gpu_ms=11.55 "
+        "frame_ms=16.67 share=0.693 present_ms=11.55 | NR: 11.5 ms of GPU time per frame "
+        "(estimate: 195 fps without NR, 60 fps with it)\n"
+        "15:54:12:148 [1] | INFO  | [DLSS 5 Neural Rendering] DLSS5 Generic: NR-VERDICT v3 state=ENGAGED "
+        "stage=- reason=warmup missing=heaps seen=364596 eligible=182323 evals=182309 ratio=0.9999 "
+        "unaccounted=0\n"
+        "15:54:12:148 [1] | INFO  | [DLSS 5 Neural Rendering] DLSS5 Generic: NR-WARN summary active=0 slugs=-\n"
+    )
+
+    def test_engaged(self):
+        d = Path(tempfile.mkdtemp())
+        (d / "ReShade.log").write_text(self.LOG)
+        v = verify.check(d)
+        self.assertEqual(v["level"], "ok")
+        facts = dict(v["facts"])
+        self.assertEqual(facts["Stato modello neurale"], "ENGAGED")
+        self.assertEqual(facts["Risoluzione elaborata"], "2560x1440")
+        self.assertEqual(facts["FPS stimati"], "60 con DLSS 5 / 195 senza")
+        self.assertEqual(facts["FPS misurati"], "60")
+
+    def test_refused_and_missing(self):
+        d = Path(tempfile.mkdtemp())
+        self.assertEqual(verify.check(d)["level"], "error")
+        (d / "ReShade.log").write_text("x | ERROR | feature 18 create failed with 0xbad00001\n")
+        self.assertIn("rifiuta", verify.check(d)["title"])
+
+
+class CompareKeyTests(unittest.TestCase):
+    def test_sets_key_on_feeder_techniques(self):
+        d = Path(tempfile.mkdtemp())
+        (d / "ReShade.ini").write_text("[GENERAL]\nPresetPath=.\\ReShadePreset.ini\n")
+        (d / "ReShadePreset.ini").write_text(
+            "PreprocessorDefinitions=\nTechniques=Lumenite_Kernel@lumenite_Kernel.fx,DLSS5_Feed@DLSS5_Feed.fx\n"
+            "TechniqueSorting=Lumenite_Kernel@lumenite_Kernel.fx,DLSS5_Feed@DLSS5_Feed.fx\n\n"
+            "[DLSS5_Feed.fx]\nDLSS5_MV_PROVIDER=3\n")
+        r = compare_key.read(d)
+        self.assertEqual(r["value"], "0,0,0,0")
+        compare_key.write(d, "145,0,0,0")
+        text = (d / "ReShadePreset.ini").read_text()
+        self.assertIn("KeyDLSS5_Feed@DLSS5_Feed.fx=145,0,0,0", text)
+        self.assertIn("KeyLumenite_Kernel@lumenite_Kernel.fx=145,0,0,0", text)
+        self.assertLess(text.index("KeyDLSS5_Feed"), text.index("[DLSS5_Feed.fx]"))
+        self.assertEqual(compare_key.read(d)["value"], "145,0,0,0")
+        with self.assertRaises(ValueError):
+            compare_key.write(d, "999,0,0,0")

@@ -135,8 +135,39 @@ function renderDetail(g) {
       <div class="small muted" style="margin-top:8px">OFF rinomina le DLL iniettate in *.dlss5off: il gioco parte originale. ON le rimette.</div>
     </div>` : "";
 
-  $("#detail").innerHTML = info + launch + installCard(g) + settingsCards(g);
+  $("#detail").innerHTML = info + launch + checkCard(g) + installCard(g) + settingsCards(g);
   bindDetail(g);
+}
+
+function checkCard(g) {
+  if (!g.install) return "";
+  const ck = g.compare_key;
+  const keySel = ck ? `
+    <div class="group"><h4>Tasto confronto in gioco</h4>
+      <div class="form">
+        <div class="field"><label for="cmp-key">Tasto DLSS 5 on/off</label>
+          <select id="cmp-key">${Object.entries(ck.options).map(([k, v]) =>
+            `<option value="${esc(k)}" ${k === ck.value ? "selected" : ""}>${esc(v)}</option>`).join("")}</select>
+          <div class="help">In gioco spegne e riaccende all'istante DLSS 5 (DLAA + neurale) per confrontare
+          l'immagine. Vale dal prossimo avvio. Per spegnere <b>solo</b> il neurale: scheda Add-ons
+          dell'overlay ReShade, interruttore Neural Rendering.</div></div>
+      </div>
+      <div class="row end"><button data-act="save-key">Salva tasto</button></div>
+    </div>` : `<div class="small muted" style="margin-top:10px">Il tasto confronto sarà disponibile dopo il primo avvio del gioco (serve il preset di ReShade).</div>`;
+  return `<div class="card">
+    <div class="title-row"><h3>Verifica e confronto</h3>
+      <button class="ghost" data-act="verify">Verifica DLSS 5</button></div>
+    <div id="verify-out" class="small muted">Gioca qualche minuto con DLSS 5 attivo, chiudi il gioco e premi "Verifica DLSS 5": legge i log e dice se il modello neurale ha lavorato.</div>
+    ${keySel}
+  </div>`;
+}
+
+function renderVerify(v) {
+  const cls = { ok: "on", warn: "off", error: "err" }[v.level] || "";
+  return `<div class="row" style="margin:6px 0 4px"><span class="badge ${cls}">${esc(v.title)}</span>
+      ${v.log_time ? `<span class="small muted">log del ${esc(v.log_time)}</span>` : ""}</div>
+    ${v.facts.length ? `<div class="grid">${v.facts.map(([k, val]) => kv(k, esc(val))).join("")}</div>` : ""}
+    ${v.hints.map((h) => `<div class="alert ${v.level === "ok" ? "" : "warn"}">${esc(h)}</div>`).join("")}`;
 }
 
 function installCard(g) {
@@ -276,6 +307,12 @@ function bindDetail(g) {
         if (!confirm("Rimuovere tutto quello che è stato installato e ripristinare i file originali?")) return;
         const r = await api("/api/restore", { id: g.id });
         runJob(r.job, g.id);
+      } else if (act === "verify") {
+        $("#verify-out").innerHTML = "Leggo i log…";
+        $("#verify-out").innerHTML = renderVerify(await api("/api/verify?id=" + encodeURIComponent(g.id)));
+      } else if (act === "save-key") {
+        const r = await api("/api/compare-key", { id: g.id, key: $("#cmp-key").value });
+        toast(`Tasto salvato su: ${r.techniques.join(", ")}. Vale dal prossimo avvio.`);
       } else if (act === "save") {
         const card = b.closest("[data-settings]");
         const r = await api("/api/settings", { id: g.id, file: b.dataset.file, values: collect(card) });

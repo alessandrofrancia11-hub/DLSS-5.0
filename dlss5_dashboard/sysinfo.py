@@ -120,12 +120,12 @@ def assess(gpu: dict | None) -> dict:
                 "detail": "Le RTX 50 eseguono il modello neurale di NVIDIA (nvngx_dlssnr.dll) senza modifiche."}
     if series == "RTX 40":
         return {"level": "community",
-                "title": "DLSS 5 neurale: solo con DLL modificata (non ufficiale)",
-                "detail": ("NVIDIA ha promesso il supporto RTX 40 ma senza data. Oggi la nvngx_dlssnr.dll "
-                           "firmata rifiuta le RTX 40 (errore 0xbad00001): serve una build modificata "
-                           "dalla community. Senza, funzionano comunque DLSS SR/DLAA, i preset del "
-                           "transformer e (nei giochi con DLSS-G) la Frame Generation, anche multipla "
-                           "con lo sblocco MFG.")}
+                "title": "DLSS 5 neurale: non ufficiale, tramite la community",
+                "detail": ("NVIDIA supporta ufficialmente solo le RTX 50. Sulle RTX 40 il passaggio "
+                           "neurale gira con le DLL e gli add-on della community (dipende da build e "
+                           "driver: usa 'Verifica DLSS 5' dopo una partita per sapere se e' attivo). "
+                           "Costa circa 11 ms per frame a 1440p su una 4070 SUPER. In ogni caso "
+                           "funzionano DLSS/DLAA, i preset transformer e la Frame Generation.")}
     if series in ("RTX 20", "RTX 30"):
         return {"level": "limited",
                 "title": "DLSS 5 neurale: solo con DLL modificata, prestazioni basse",
