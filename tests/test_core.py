@@ -329,3 +329,27 @@ class XboxTests(unittest.TestCase):
         (d / "Broken" / "Content").mkdir(parents=True)
         (d / "Broken" / "Content" / "MicrosoftGame.config").write_text("<not xml")
         self.assertEqual(xbox.scan(d), [])
+
+
+class OptiVerifyAndDlcTests(unittest.TestCase):
+    def test_optiscaler_log(self):
+        d = Path(tempfile.mkdtemp())
+        v = verify.check(d, "optiscaler")
+        self.assertEqual(v["title"], "Nessun OptiScaler.log")
+        (d / "OptiScaler.log").write_text(
+            "[12:00:00] [info] DLSS-NR (proxy): feature created at 2560x1440 through the driver's nvngx\n"
+            "[12:01:00] [info] Neural Rendering key pressed, will be toggling the pass\n")
+        v = verify.check(d, "optiscaler")
+        self.assertEqual(v["level"], "ok")
+        (d / "OptiScaler.log").write_text(
+            "[12:00:00] [error] DLSS-NR (proxy): CreateFeature(18) failed 0xBAD00001 -- falling back\n")
+        self.assertIn("non partito", verify.check(d, "optiscaler")["title"])
+
+    def test_dlc_packages_are_not_games(self):
+        d = Path(tempfile.mkdtemp())
+        c = d / "Some DLC" / "Content"
+        c.mkdir(parents=True)
+        (c / "MicrosoftGame.config").write_text(
+            '<Game configVersion="1"><Identity Name="Pub.DLC1" Publisher="CN=X" Version="1.0.0.0"/>'
+            '<ShellVisuals DefaultDisplayName="DLC 1"/></Game>')
+        self.assertEqual(xbox.scan(d), [])

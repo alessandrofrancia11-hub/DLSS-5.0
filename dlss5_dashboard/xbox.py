@@ -92,8 +92,8 @@ def scan(folder: Path) -> list[dict]:
     for d in entries:
         content = d / "Content"
         cfg = parse_config(content / "MicrosoftGame.config")
-        if not cfg:
-            continue
+        if not cfg or not cfg["executables"]:
+            continue  # DLC / add-on packages ship a config without executables
         name = cfg["display"]
         if not name or name.startswith("ms-resource:"):
             name = d.name

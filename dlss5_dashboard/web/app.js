@@ -153,7 +153,9 @@ function checkCard(g) {
           dell'overlay ReShade, interruttore Neural Rendering.</div></div>
       </div>
       <div class="row end"><button data-act="save-key">Salva tasto</button></div>
-    </div>` : `<div class="small muted" style="margin-top:10px">Il tasto confronto sarà disponibile dopo il primo avvio del gioco (serve il preset di ReShade).</div>`;
+    </div>` : g.install.route === "optiscaler"
+      ? `<div class="alert" style="margin-top:10px">Route OptiScaler: niente ReShade. In gioco <b>INSERT</b> apre il menu OptiScaler. Per spegnere e riaccendere al volo il solo neurale imposta <b>"Tasto Neural Rendering"</b> nella sezione OptiScaler qui sotto.</div>`
+      : `<div class="small muted" style="margin-top:10px">Il tasto confronto sarà disponibile dopo il primo avvio del gioco (serve il preset di ReShade).</div>`;
   return `<div class="card">
     <div class="title-row"><h3>Verifica e confronto</h3>
       <button class="ghost" data-act="verify">Verifica DLSS 5</button></div>

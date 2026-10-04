@@ -37,7 +37,48 @@ def _last(rx: re.Pattern, lines: list[str]):
     return None
 
 
-def check(exe_dir: str | Path) -> dict:
+_OPTI_OK = re.compile(r"DLSS-NR.*(feature created at|feature up at|model initialised|running natively)", re.I)
+_OPTI_BAD = re.compile(r"DLSS-NR.*(failed|refused|could not|unavailable|not possible)|CreateFeature\(18\) failed", re.I)
+_OPTI_TOGGLE = re.compile(r"Neural Rendering key pressed", re.I)
+
+
+def check_optiscaler(exe_dir: str | Path) -> dict:
+    """Same verdict for the OptiScaler route, from OptiScaler.log."""
+    d = Path(exe_dir)
+    log = d / "OptiScaler.log"
+    out = {"level": "warn", "title": "", "facts": [], "hints": [], "log_time": None}
+    if not log.exists():
+        out["title"] = "Nessun OptiScaler.log"
+        out["hints"] = ["OptiScaler scrive il log solo se 'Log su file' e' attivo: accendilo nella sezione "
+                        "OptiScaler qui sotto, gioca qualche minuto e riprova.",
+                        "Verifica veloce senza log: in gioco premi INSERT. Se compare il menu OptiScaler "
+                        "e' caricato; nella sezione 'DLSS Neural Rendering' sotto la casella c'e' lo stato."]
+        return out
+    lines = _tail(log)
+    out["log_time"] = time.strftime("%d/%m %H:%M", time.localtime(log.stat().st_mtime))
+    ok, bad = _last(_OPTI_OK, lines), _last(_OPTI_BAD, lines)
+    toggles = sum(1 for line in lines if _OPTI_TOGGLE.search(line))
+    if ok:
+        out["facts"].append(("Modello neurale", ok.string.strip()[-140:]))
+    if bad:
+        out["facts"].append(("Ultimo errore DLSS-NR", bad.string.strip()[-140:]))
+    if toggles:
+        out["facts"].append(("Pressioni tasto Neural Rendering", str(toggles)))
+    if ok and (not bad or lines.index(ok.string) > lines.index(bad.string)):
+        out["level"], out["title"] = "ok", "OptiScaler caricato, DLSS 5 neurale creato"
+    elif bad:
+        out["level"], out["title"] = "warn", "OptiScaler caricato, DLSS 5 neurale non partito"
+        out["hints"].append("Controlla in gioco (INSERT) che 'Enable Neural Rendering' sia acceso e leggi "
+                            "il motivo scritto sotto la casella.")
+    else:
+        out["level"], out["title"] = "warn", "OptiScaler caricato, nessun dato DLSS-NR nel log"
+        out["hints"].append("Accendi 'Neural Rendering' (INSERT in gioco o qui sotto), gioca e riprova.")
+    return out
+
+
+def check(exe_dir: str | Path, route: str | None = None) -> dict:
+    if route == "optiscaler":
+        return check_optiscaler(exe_dir)
     d = Path(exe_dir)
     log = d / "ReShade.log"
     out = {"level": "error", "title": "", "facts": [], "hints": [], "log_time": None}

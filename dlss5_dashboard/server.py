@@ -79,7 +79,8 @@ def api_get(path: str, q: dict):
         g = games.analyze(_game_or_404(q["id"]))
         if not g.get("exe_dir"):
             raise ValueError("Eseguibile non trovato.")
-        return verify.check(g["exe_dir"])
+        manifest = store.load()["manifests"].get(g["id"]) or {}
+        return verify.check(g["exe_dir"], manifest.get("route"))
     if path == "/api/options":
         return {"consumers": installers.FEEDER_CONSUMERS, "apis": installers.FEEDER_APIS,
                 "opti_builds": {k: v["label"] for k, v in installers.OPTI_BUILDS.items()},
