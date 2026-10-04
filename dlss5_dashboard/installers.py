@@ -78,7 +78,10 @@ def _check_free(game_id: str) -> None:
 
 
 def _save_manifest(game_id: str, manifest: dict) -> None:
-    store.update(lambda s: s["manifests"].__setitem__(game_id, manifest))
+    def save(s):
+        s["manifests"][game_id] = manifest
+        s["prefs"].setdefault(game_id, {})["dlss_on"] = True  # a fresh install starts ON
+    store.update(save)
 
 
 def _validate_dlssnr(path: str | None) -> Path | None:

@@ -20,7 +20,10 @@ def launch(game: dict, dlss_on: bool, args: str = "") -> list[str]:
         log.append("Nessuna installazione gestita: il gioco parte senza modifiche.")
 
     args = (args or "").strip()
-    store.update(lambda s: s["prefs"].setdefault(game["id"], {}).update(args=args, dlss_on=dlss_on))
+    pref = {"args": args}
+    if manifest:  # without an install the switch is meaningless: don't remember "off"
+        pref["dlss_on"] = dlss_on
+    store.update(lambda s: s["prefs"].setdefault(game["id"], {}).update(pref))
 
     if game.get("appid"):
         url = f"steam://run/{game['appid']}//{urllib.parse.quote(args)}/" if args \
