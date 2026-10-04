@@ -74,7 +74,7 @@ def api_get(path: str, q: dict):
             raise LookupError("Job non trovato.")
         return j
     if path == "/api/options":
-        return {"consumers": installers.FEEDER_CONSUMERS,
+        return {"consumers": installers.FEEDER_CONSUMERS, "apis": installers.FEEDER_APIS,
                 "opti_builds": {k: v["label"] for k, v in installers.OPTI_BUILDS.items()},
                 "proxies": installers.PROXY_CHOICES, "version": __version__}
     raise LookupError("Endpoint sconosciuto.")

@@ -168,6 +168,9 @@ function installCard(g) {
         </select>
         <div class="help">Consigliata in base ai file del gioco (DLSS nativo: ${Object.keys(g.native_dlss || {}).length ? "sì" : "no"}).</div>
       </div>
+      <div class="field" data-route="feeder"><label>API grafica del gioco</label>
+        <select id="api">${Object.entries(o.apis || {}).map(([k, v]) => `<option value="${esc(k)}" ${k === g.feeder_api ? "selected" : ""}>${esc(v)}</option>`).join("")}</select>
+        <div class="help">Decide come viene caricato ReShade (dxgi.dll per DirectX, layer di sistema per Vulkan).${g.feeder_api !== "Auto" ? " Preimpostata per questo gioco." : ""}</div></div>
       <div class="field" data-route="feeder"><label>Add-on neurale</label>${sel("consumer", o.consumers)}
         <div class="help">Si apre la finestra PowerShell dell'installer ufficiale del Feeder: rispondi lì alle domande.</div></div>
       <div class="field" data-route="optiscaler"><label>Build OptiScaler</label>${sel("build", o.opti_builds)}</div>
@@ -265,7 +268,7 @@ function bindDetail(g) {
         await api("/api/games/remove", { id: g.id });
         CURRENT = null; $("#detail").innerHTML = `<div class="card empty">Rimosso.</div>`; loadGames();
       } else if (act === "install") {
-        const options = { consumer: $("#consumer").value, build: $("#build").value,
+        const options = { api: $("#api").value, consumer: $("#consumer").value, build: $("#build").value,
                           proxy: $("#proxy").value, dlssnr: $("#dlssnr").value.trim() };
         const r = await api("/api/install", { id: g.id, route: $("#route").value, options });
         runJob(r.job, g.id);

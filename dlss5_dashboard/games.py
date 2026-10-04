@@ -14,6 +14,10 @@ KNOWN = {
         "name": "Euro Truck Simulator 2",
         "exe": "bin/win_x64/eurotrucks2.exe",
         "api": "D3D11",
+        # The engine loads its renderer at run time and the exe names vulkan-1.dll too, so the
+        # feeder's auto-detection can pick Vulkan (machine-wide layer, no local dxgi.dll) while
+        # the game actually renders with DirectX 11 - ReShade then never loads.
+        "feeder_api": "D3D",
         "notes": [
             "ETS2 non ha DLSS nativo: l'unica strada e' DLSS5-Feeder (ReShade + motion vector "
             "stimati), che fornisce DLAA e, se la DLL neurale lo permette, il passaggio DLSS 5.",
@@ -25,6 +29,7 @@ KNOWN = {
         "name": "American Truck Simulator",
         "exe": "bin/win_x64/amtrucks.exe",
         "api": "D3D11",
+        "feeder_api": "D3D",
         "notes": [
             "Stesso motore di ETS2: niente DLSS nativo, strada DLSS5-Feeder.",
             "Non usare l'iniezione con TruckersMP (multiplayer).",
@@ -234,7 +239,7 @@ def analyze(game: dict) -> dict:
     exe = Path(game["exe"]) if game.get("exe") else find_exe(install, appid)
     known = KNOWN.get(appid or "", {})
     out = {**game, "exe": str(exe) if exe else None, "notes": list(known.get("notes", [])),
-           "warnings": []}
+           "warnings": [], "feeder_api": known.get("feeder_api", "Auto")}
     if not exe or not exe.exists():
         out["warnings"].append("Eseguibile del gioco non trovato: aggiungilo a mano.")
         out.update(arch=None, api=None, native_dlss={}, anticheat={}, components={},

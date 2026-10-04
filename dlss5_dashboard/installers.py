@@ -28,6 +28,8 @@ UA = {"User-Agent": "dlss5-dashboard/0.1 (+local install helper)"}
 
 FEEDER_INSTALLER_URL = ("https://raw.githubusercontent.com/jlrouzies-fr/DLSS5-Feeder/main/"
                         "tools/Install-DLSS5Feeder.ps1")
+FEEDER_APIS = {"Auto": "Rilevamento automatico", "D3D": "DirectX 10/11/12",
+               "Vulkan": "Vulkan", "OpenGL": "OpenGL", "D3D9": "DirectX 9", "D3D8": "DirectX 8"}
 FEEDER_CONSUMERS = {"RenoDX": "RenoDX DLSS 5 add-on (consigliato dal Feeder)",
                     "OptiScaler": "OptiScaler DLSS-NR (wilsjo2)"}
 
@@ -107,6 +109,9 @@ def install_feeder(job, game: dict, opts: dict) -> dict:
     if consumer not in FEEDER_CONSUMERS:
         raise ValueError(f"Consumer non valido: {consumer}")
     dlssnr = _validate_dlssnr(opts.get("dlssnr"))
+    api = opts.get("api") or game.get("feeder_api") or "Auto"
+    if api not in FEEDER_APIS:
+        raise ValueError(f"API non valida: {api}")
 
     cache = paths.sub("downloads")
     ps1 = _download(FEEDER_INSTALLER_URL, cache / "Install-DLSS5Feeder.ps1", job)
@@ -114,7 +119,8 @@ def install_feeder(job, game: dict, opts: dict) -> dict:
     manifest = backup.begin(game["id"], str(exe.parent), "feeder")
     job.log(f"Backup di {len(manifest['saved'])} file in {manifest['backup_dir']}")
 
-    args = [_ps_quote(exe), "-Consumer", consumer, "-HelperMode", "No"]
+    args = [_ps_quote(exe), "-Consumer", consumer, "-HelperMode", "No", "-Api", api]
+    job.log(f"API grafica per l'installer: {api}")
     if consumer == "OptiScaler":
         args += ["-OptiScalerFork", "wilsjo2"]
     if dlssnr:
