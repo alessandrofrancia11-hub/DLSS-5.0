@@ -132,6 +132,11 @@ OPTISCALER = {
                "Attivalo solo se a 3x/4x l'immagine si blocca.", options=_BOOL),
         ]},
         {"title": "Overlay e diagnostica", "fields": [
+            _f("Menu", "OverlayMenu", "Tipo di menu", "select",
+               "Se INSERT e i tasti (es. Bloc Scorr) non fanno nulla, metti 'Classico': il menu viene "
+               "disegnato dentro il DLSS e i tasti tornano a funzionare. Disattiva la Frame Generation "
+               "di OptiScaler (non quella del gioco).",
+               options={"auto": "Auto (overlay)", "true": "Overlay", "false": "Classico (consigliato se i tasti non vanno)"}),
             _f("Menu", "ShortcutKey", "Tasto menu OptiScaler", "select", "Predefinito: INSERT.",
                options={"auto": "INSERT (predefinito)", "36": "Home", "35": "Fine (End)",
                         "121": "F10"}),
