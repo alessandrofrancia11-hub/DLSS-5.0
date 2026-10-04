@@ -79,7 +79,8 @@ def api_get(path: str, q: dict):
         g = games.analyze(_game_or_404(q["id"]))
         if not g.get("exe_dir"):
             raise ValueError("Eseguibile non trovato.")
-        return verify.check(g["exe_dir"])
+        manifest = store.load()["manifests"].get(g["id"]) or {}
+        return verify.check(g["exe_dir"], manifest.get("route"))
     if path == "/api/options":
         return {"consumers": installers.FEEDER_CONSUMERS, "apis": installers.FEEDER_APIS,
                 "opti_builds": {k: v["label"] for k, v in installers.OPTI_BUILDS.items()},
@@ -120,7 +121,9 @@ def api_post(path: str, body: dict):
         return {"log": backup.set_enabled(manifest, bool(body["enabled"]))}
     if path == "/api/launch":
         g = games.analyze(_game_or_404(body["id"]))
-        return {"log": launcher.launch(g, bool(body.get("dlss_on", True)), body.get("args", ""))}
+        neural = body.get("neural_on")
+        return {"log": launcher.launch(g, bool(body.get("dlss_on", True)), body.get("args", ""),
+                                       None if neural is None else bool(neural))}
     if path == "/api/open-folder":
         g = games.analyze(_game_or_404(body["id"]))
         launcher.open_folder(g.get("exe_dir") or g["install_dir"])

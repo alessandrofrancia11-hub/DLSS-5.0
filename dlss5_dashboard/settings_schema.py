@@ -93,6 +93,10 @@ OPTISCALER = {
                auto=True),
         ]},
         {"title": "DLSS 5 Neural Rendering", "fields": [
+            _f("DlssNr", "ToggleKey", "Tasto Neural Rendering on/off (in gioco)", "select",
+               "Accende/spegne all'istante SOLO il passaggio neurale, per confrontare.",
+               options={"auto": "Nessuno", "145": "Bloc Scorr (Scroll Lock)", "19": "Pausa",
+                        "120": "F9", "121": "F10", "35": "Fine (End)"}),
             _f("DlssNr", "Enabled", "Neural Rendering", "select",
                "Serve nvngx_dlssnr.dll accanto al gioco. Su RTX 40 solo con build modificata.",
                options=_BOOL),
@@ -126,6 +130,18 @@ OPTISCALER = {
                         "6": "6x"}),
             _f("MfgUnlock", "ForceFlipMeteringOff", "Fix immagine bloccata", "select",
                "Attivalo solo se a 3x/4x l'immagine si blocca.", options=_BOOL),
+        ]},
+        {"title": "Overlay e diagnostica", "fields": [
+            _f("Menu", "OverlayMenu", "Tipo di menu", "select",
+               "Se INSERT e i tasti (es. Bloc Scorr) non fanno nulla, metti 'Classico': il menu viene "
+               "disegnato dentro il DLSS e i tasti tornano a funzionare. Disattiva la Frame Generation "
+               "di OptiScaler (non quella del gioco).",
+               options={"auto": "Auto (overlay)", "true": "Overlay", "false": "Classico (consigliato se i tasti non vanno)"}),
+            _f("Menu", "ShortcutKey", "Tasto menu OptiScaler", "select", "Predefinito: INSERT.",
+               options={"auto": "INSERT (predefinito)", "36": "Home", "35": "Fine (End)",
+                        "121": "F10"}),
+            _f("Log", "LogToFile", "Log su file (OptiScaler.log)", "select",
+               "Serve a 'Verifica DLSS 5'. Spegnilo dopo: rallenta un po'.", options=_BOOL),
         ]},
         {"title": "Upscaler", "advanced": True, "fields": [
             _f("Upscalers", "Dx11Upscaler", "Upscaler DX11", "select",

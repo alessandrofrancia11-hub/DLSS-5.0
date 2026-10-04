@@ -6,7 +6,7 @@ import os
 import re
 from pathlib import Path
 
-from . import pe, store
+from . import pe, store, xbox
 
 # Games with known layouts and quirks. Everything else is detected generically.
 KNOWN = {
@@ -179,8 +179,11 @@ def manual_id(exe: str) -> str:
 
 def all_games() -> list[dict]:
     state = store.load()
-    games = steam_games()
+    games = steam_games() + xbox.xbox_games()
+    known_exes = {os.path.normcase(g["exe"]) for g in games if g.get("exe")}
     for g in state["manual_games"]:
+        if os.path.normcase(g["exe"]) in known_exes:
+            continue  # added by hand before the Xbox scan found it
         games.append({**g, "source": "manual"})
     for g in games:
         g["installed_route"] = (state["manifests"].get(g["id"]) or {}).get("route")
@@ -263,6 +266,12 @@ def analyze(game: dict) -> dict:
     if ac:
         out["warnings"].append("Anti-cheat rilevato (" + ", ".join(ac) + "): iniettare DLL puo' "
                                "portare al BAN. Usalo solo offline/single player o non usarlo.")
+    if game.get("source") == "xbox":
+        out["notes"].append("Gioco Xbox / Game Pass: la dashboard lo avvia tramite Windows come fa "
+                            "l'app Xbox. I parametri di avvio non sono supportati.")
+        if "\\windowsapps\\" in str(exe).lower():
+            out["warnings"].append("Il gioco e' in WindowsApps (cartella protetta): non si puo' "
+                                   "modificare. Spostalo da app Xbox > Gestisci > File in XboxGames.")
     if info["machine"] == "x86":
         out["notes"].append("Gioco a 32 bit: il Feeder usa il processo helper a 64 bit.")
     return out
